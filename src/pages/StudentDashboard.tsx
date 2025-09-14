@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,13 +12,89 @@ import {
   Trophy, 
   Bell,
   MapPin,
-  Code
+  Code,
+  FileText,
+  AlertTriangle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 const StudentDashboard = () => {
   const [attendanceCode, setAttendanceCode] = useState("");
+  const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [isLocationValid, setIsLocationValid] = useState<boolean | null>(null);
   const { toast } = useToast();
+
+  // College location coordinates (example: replace with actual college coordinates)
+  const collegeLocation = {
+    lat: 12.9716, // Example: Bangalore coordinates
+    lng: 77.5946,
+    radius: 100 // meters
+  };
+
+  // Function to calculate distance between two coordinates
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lng2-lng1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c; // Distance in meters
+  };
+
+  // Get current location
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by this browser.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setCurrentLocation(location);
+        setLocationError(null);
+
+        // Check if location is within college radius
+        const distance = calculateDistance(
+          location.lat, 
+          location.lng, 
+          collegeLocation.lat, 
+          collegeLocation.lng
+        );
+        
+        const isValid = distance <= collegeLocation.radius;
+        setIsLocationValid(isValid);
+
+        if (!isValid) {
+          toast({
+            title: "Location Alert",
+            description: "You are not within the college premises. This has been reported to your teacher.",
+            variant: "destructive"
+          });
+        }
+      },
+      (error) => {
+        setLocationError("Unable to retrieve your location.");
+        console.error("Error getting location:", error);
+      }
+    );
+  };
+
+  // Get location on component mount
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
 
   // Mock data - in real app this would come from Supabase
   const attendanceStats = {
@@ -56,6 +132,25 @@ const StudentDashboard = () => {
       toast({
         title: "Error",
         description: "Please enter the attendance code",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check location validity before marking attendance
+    if (isLocationValid === false) {
+      toast({
+        title: "Attendance Denied",
+        description: "You must be within college premises to mark attendance",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (isLocationValid === null) {
+      toast({
+        title: "Location Check Required",
+        description: "Please wait for location verification to complete",
         variant: "destructive"
       });
       return;
@@ -142,7 +237,7 @@ const StudentDashboard = () => {
                 
                 <Progress value={attendanceStats.percentage} className="mb-4" />
                 
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div className="space-y-3">
                     <h4 className="font-semibold">Mark Attendance</h4>
                     <div className="flex gap-2">
@@ -157,13 +252,40 @@ const StudentDashboard = () => {
                       </Button>
                     </div>
                   </div>
+                  
+                  {/* Location Status */}
+                  <div className="space-y-2">
+                    <h4 className="font-semibold">Location Status</h4>
+                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                      <MapPin className="w-4 h-4" />
+                      <div className="flex-1">
+                        {locationError ? (
+                          <div className="flex items-center gap-2 text-destructive">
+                            <AlertTriangle className="w-4 h-4" />
+                            <span className="text-sm">{locationError}</span>
+                          </div>
+                        ) : isLocationValid === null ? (
+                          <span className="text-sm text-muted-foreground">Checking location...</span>
+                        ) : isLocationValid ? (
+                          <span className="text-sm text-education-success">✓ Within college premises</span>
+                        ) : (
+                          <span className="text-sm text-destructive">⚠ Outside college premises</span>
+                        )}
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={getCurrentLocation}
+                      >
+                        Refresh
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Alternative Methods */}
                   <div className="space-y-3">
                     <h4 className="font-semibold">Alternative Methods</h4>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        Geo Check-in
-                      </Button>
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -171,6 +293,12 @@ const StudentDashboard = () => {
                       >
                         USSD
                       </Button>
+                      <Link to="/od-submission">
+                        <Button variant="outline" size="sm">
+                          <FileText className="w-4 h-4 mr-2" />
+                          Submit OD
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -253,7 +381,26 @@ const StudentDashboard = () => {
                       <div className="text-sm text-muted-foreground mb-2">
                         Due: {activity.deadline}
                       </div>
-                      <Button size="sm" variant="outline" className="w-full">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => {
+                          if (activity.type === 'quiz') {
+                            toast({
+                              title: "Quiz Started!",
+                              description: `Starting ${activity.title}`,
+                            });
+                            // In a real app, this would navigate to the quiz page
+                            // For now, we'll just show a success message
+                          } else {
+                            toast({
+                              title: "Activity Started!",
+                              description: `Starting ${activity.title}`,
+                            });
+                          }
+                        }}
+                      >
                         {activity.type === 'quiz' && <BookOpen className="w-3 h-3 mr-2" />}
                         {activity.type === 'roadmap' && <MapPin className="w-3 h-3 mr-2" />}
                         {activity.type === 'challenge' && <Trophy className="w-3 h-3 mr-2" />}

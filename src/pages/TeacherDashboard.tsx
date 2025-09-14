@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Users, 
   QrCode, 
@@ -13,13 +17,23 @@ import {
   Clock,
   Download,
   Plus,
-  RefreshCw
+  RefreshCw,
+  BookOpen,
+  AlertTriangle
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const TeacherDashboard = () => {
   const [currentCode, setCurrentCode] = useState("");
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [isCreateQuizOpen, setIsCreateQuizOpen] = useState(false);
+  const [quizForm, setQuizForm] = useState({
+    title: "",
+    subject: "",
+    description: "",
+    duration: "",
+    questions: ""
+  });
   const { toast } = useToast();
 
   // Mock data
@@ -42,9 +56,39 @@ const TeacherDashboard = () => {
   ];
 
   const pendingRequests = [
-    { student: "John Doe", reason: "Sports Competition", type: "Sports", date: "Dec 15, 2024", status: "pending" },
-    { student: "Jane Smith", reason: "Technical Fest", type: "Fest", date: "Dec 16, 2024", status: "pending" },
-    { student: "Mike Johnson", reason: "Internship Interview", type: "Internship", date: "Dec 17, 2024", status: "pending" }
+    { 
+      student: "John Doe", 
+      reason: "Sports Competition", 
+      type: "Sports", 
+      date: "Dec 15, 2024", 
+      status: "pending",
+      subject: "Data Structures & Algorithms",
+      description: "Participating in inter-college cricket tournament",
+      startDate: "Dec 20, 2024",
+      endDate: "Dec 22, 2024"
+    },
+    { 
+      student: "Jane Smith", 
+      reason: "Technical Fest", 
+      type: "Fest", 
+      date: "Dec 16, 2024", 
+      status: "pending",
+      subject: "Database Management Systems",
+      description: "Organizing technical fest at college",
+      startDate: "Dec 25, 2024",
+      endDate: "Dec 27, 2024"
+    },
+    { 
+      student: "Mike Johnson", 
+      reason: "Internship Interview", 
+      type: "Internship", 
+      date: "Dec 17, 2024", 
+      status: "pending",
+      subject: "Operating Systems",
+      description: "Final round interview at tech company",
+      startDate: "Dec 18, 2024",
+      endDate: "Dec 18, 2024"
+    }
   ];
 
   const recentActivities = [
@@ -75,6 +119,61 @@ const TeacherDashboard = () => {
     });
   };
 
+  const handleExportData = () => {
+    // Mock export functionality
+    toast({
+      title: "Export Started",
+      description: "Your data is being prepared for download...",
+    });
+    
+    // Simulate file download
+    setTimeout(() => {
+      const csvContent = "Student Name,Subject,Attendance %,Last Class\n" +
+        "John Doe,Data Structures,90%,Dec 15, 2024\n" +
+        "Jane Smith,DBMS,85%,Dec 15, 2024\n" +
+        "Mike Johnson,OS,88%,Dec 15, 2024";
+      
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'attendance-report.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Export Complete",
+        description: "Attendance report downloaded successfully",
+      });
+    }, 2000);
+  };
+
+  const handleCreateQuiz = () => {
+    if (!quizForm.title || !quizForm.subject || !quizForm.duration) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Quiz Created!",
+      description: `Quiz "${quizForm.title}" has been created successfully`,
+    });
+    
+    // Reset form and close dialog
+    setQuizForm({
+      title: "",
+      subject: "",
+      description: "",
+      duration: "",
+      questions: ""
+    });
+    setIsCreateQuizOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="container mx-auto max-w-7xl">
@@ -85,14 +184,81 @@ const TeacherDashboard = () => {
             <p className="text-muted-foreground">Faculty ID: MATH001 - Dr. Sarah Johnson</p>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleExportData}>
               <Download className="w-4 h-4 mr-2" />
               Export Data
             </Button>
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              New Quiz
-            </Button>
+            <Dialog open={isCreateQuizOpen} onOpenChange={setIsCreateQuizOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Quiz
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Create New Quiz</DialogTitle>
+                  <DialogDescription>
+                    Create a new quiz for your students
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="quiz-title">Quiz Title *</Label>
+                    <Input
+                      id="quiz-title"
+                      placeholder="Enter quiz title"
+                      value={quizForm.title}
+                      onChange={(e) => setQuizForm(prev => ({ ...prev, title: e.target.value }))}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="quiz-subject">Subject *</Label>
+                    <Select value={quizForm.subject} onValueChange={(value) => setQuizForm(prev => ({ ...prev, subject: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select subject" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {subjects.map((subject) => (
+                          <SelectItem key={subject} value={subject}>
+                            {subject}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="quiz-duration">Duration (minutes) *</Label>
+                    <Input
+                      id="quiz-duration"
+                      type="number"
+                      placeholder="30"
+                      value={quizForm.duration}
+                      onChange={(e) => setQuizForm(prev => ({ ...prev, duration: e.target.value }))}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="quiz-description">Description</Label>
+                    <Textarea
+                      id="quiz-description"
+                      placeholder="Enter quiz description..."
+                      value={quizForm.description}
+                      onChange={(e) => setQuizForm(prev => ({ ...prev, description: e.target.value }))}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsCreateQuizOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateQuiz}>
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    Create Quiz
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
@@ -281,15 +447,23 @@ const TeacherDashboard = () => {
                       <div className="flex justify-between items-start mb-3">
                         <div>
                           <div className="font-medium">{request.student}</div>
-                          <div className="text-sm text-muted-foreground">{request.reason}</div>
+                          <div className="text-sm text-muted-foreground">{request.subject}</div>
                         </div>
                         <Badge variant="outline">{request.type}</Badge>
+                      </div>
+                      
+                      <div className="mb-3">
+                        <div className="text-sm font-medium mb-1">Reason: {request.reason}</div>
+                        <div className="text-sm text-muted-foreground mb-2">{request.description}</div>
+                        <div className="text-sm text-muted-foreground">
+                          <span className="font-medium">Duration:</span> {request.startDate} - {request.endDate}
+                        </div>
                       </div>
                       
                       <div className="flex items-center justify-between">
                         <div className="text-sm text-muted-foreground flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {request.date}
+                          Submitted: {request.date}
                         </div>
                         <div className="flex gap-2">
                           <Button 
