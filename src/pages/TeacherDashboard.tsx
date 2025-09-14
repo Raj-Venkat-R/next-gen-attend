@@ -31,9 +31,14 @@ const TeacherDashboard = () => {
   };
 
   const subjects = [
-    { name: "Mathematics - Section A", students: 45, present: 38, percentage: 84 },
-    { name: "Mathematics - Section B", students: 42, present: 35, percentage: 83 },
-    { name: "Advanced Calculus", students: 28, present: 24, percentage: 86 }
+    { name: "Data Structures & Algorithms - Section A", students: 45, present: 38, percentage: 84 },
+    { name: "Database Management Systems (DBMS) - Section B", students: 42, present: 35, percentage: 83 },
+    { name: "Operating Systems (OS)", students: 38, present: 32, percentage: 84 },
+    { name: "Computer Networks (CN)", students: 40, present: 34, percentage: 85 },
+    { name: "Theory of Computation (TOC)", students: 35, present: 30, percentage: 86 },
+    { name: "Software Engineering (SE)", students: 44, present: 38, percentage: 86 },
+    { name: "Artificial Intelligence (AI)", students: 30, present: 26, percentage: 87 },
+    { name: "Machine Learning (ML)", students: 28, present: 24, percentage: 86 }
   ];
 
   const pendingRequests = [
@@ -52,7 +57,8 @@ const TeacherDashboard = () => {
     setIsGeneratingCode(true);
     // Simulate code generation
     setTimeout(() => {
-      const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      // Generate 6-digit numeric code
+      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
       setCurrentCode(newCode);
       setIsGeneratingCode(false);
       toast({
@@ -117,9 +123,14 @@ const TeacherDashboard = () => {
                         <div>
                           <label className="text-sm font-medium">Select Subject</label>
                           <select className="w-full mt-1 p-2 border rounded-md">
-                            <option>Mathematics - Section A</option>
-                            <option>Mathematics - Section B</option>
-                            <option>Advanced Calculus</option>
+                            <option>Data Structures & Algorithms - Section A</option>
+                            <option>Database Management Systems (DBMS) - Section B</option>
+                            <option>Operating Systems (OS)</option>
+                            <option>Computer Networks (CN)</option>
+                            <option>Theory of Computation (TOC)</option>
+                            <option>Software Engineering (SE)</option>
+                            <option>Artificial Intelligence (AI)</option>
+                            <option>Machine Learning (ML)</option>
                           </select>
                         </div>
                         <div>

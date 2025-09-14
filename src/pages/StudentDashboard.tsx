@@ -29,16 +29,20 @@ const StudentDashboard = () => {
   };
 
   const subjects = [
-    { name: "Mathematics", present: 18, total: 20, percentage: 90 },
-    { name: "Physics", present: 15, total: 18, percentage: 83 },
-    { name: "Chemistry", present: 12, total: 15, percentage: 80 },
-    { name: "Computer Science", present: 22, total: 25, percentage: 88 }
+    { name: "Data Structures & Algorithms", present: 18, total: 20, percentage: 90 },
+    { name: "Database Management Systems (DBMS)", present: 15, total: 18, percentage: 83 },
+    { name: "Operating Systems (OS)", present: 12, total: 15, percentage: 80 },
+    { name: "Computer Networks (CN)", present: 22, total: 25, percentage: 88 },
+    { name: "Theory of Computation (TOC)", present: 14, total: 16, percentage: 87 },
+    { name: "Software Engineering (SE)", present: 19, total: 22, percentage: 86 },
+    { name: "Artificial Intelligence (AI)", present: 13, total: 15, percentage: 87 },
+    { name: "Machine Learning (ML)", present: 11, total: 12, percentage: 92 }
   ];
 
   const upcomingClasses = [
-    { subject: "Mathematics", time: "09:00 AM", room: "Room 101" },
-    { subject: "Physics Lab", time: "11:00 AM", room: "Lab 2" },
-    { subject: "Chemistry", time: "02:00 PM", room: "Room 205" }
+    { subject: "Data Structures & Algorithms", time: "09:00 AM", room: "Room 101" },
+    { subject: "DBMS Lab", time: "11:00 AM", room: "Lab 2" },
+    { subject: "Operating Systems", time: "02:00 PM", room: "Room 205" }
   ];
 
   const activities = [
@@ -63,6 +67,18 @@ const StudentDashboard = () => {
       description: "Your attendance has been successfully recorded",
     });
     setAttendanceCode("");
+  };
+
+  const handleUSSDAttendance = () => {
+    // In real app, get current attendance code from backend/context
+    const currentAttendanceCode = "123456"; // This would come from backend
+    const ussdCode = `*123*${currentAttendanceCode}#`;
+    window.location.href = `tel:${ussdCode}`;
+    
+    toast({
+      title: "USSD Dialer Opened",
+      description: `Dialing: ${ussdCode}`,
+    });
   };
 
   const getPercentageColor = (percentage: number) => {
@@ -148,7 +164,11 @@ const StudentDashboard = () => {
                         <MapPin className="w-4 h-4 mr-2" />
                         Geo Check-in
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleUSSDAttendance}
+                      >
                         USSD
                       </Button>
                     </div>
